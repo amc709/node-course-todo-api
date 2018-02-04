@@ -10,15 +10,29 @@ const {Todo} = require('./../models/todo');
   NOTE:  test-watch should be added as a script in package.json
 */
 
+/*
+  Instead of clearing the database before running the tests, we will populate
+  the database with some seed data using the array below.
+*/
+const todos = [{
+  text: 'First test todo'
+},{
+  text: 'Second test todo'
+}];
+
 // This wipes out the Todos database content before
 // running this test.  This ensures that after the post behavior successfully
 // adds the todo item in the database, there will only be one item in
 // that collection.
 beforeEach((done) => {
-  Todo.remove({}).then(() => done());
+  // Todo.remove({}).then(() => done());
+
+  Todo.remove({}).then(() => {
+    return Todo.insertMany(todos);  // Insert seed data into collection
+  }).then(() => done());
 });
 
-
+// POST Tests
 describe('POST /todos', () => {
   it('should create a new todo', (done) => {
     var text = 'Clean house';
@@ -35,11 +49,15 @@ describe('POST /todos', () => {
           return done(err);
         }
 
-        Todo.find().then((todos) => {
+        Todo.find({text}).then((todos) => {
           expect(todos.length).toBe(1);
           expect(todos[0].text).toBe(text);
+
+          console.log(JSON.stringify(todos, undefined, 2));
           done();
         }).catch((err) => done(err));
+
+        console.log('Done with first test');
       });
   });
 
@@ -58,10 +76,25 @@ describe('POST /todos', () => {
           }
 
           Todo.find().then((todos) => {
-            expect(todos.length).toBe(0);
+            expect(todos.length).toBe(2);
             done();
           }).catch((err) => done(err));
         });
+  });
+
+});
+
+
+// GET tests
+describe('GET /todos', () => {
+  it('should get all todos', (done) => {
+    request(app)
+      .get('/todos')
+      .expect(200)
+      .expect((res) => {
+        expect(res.body.todos.length).toBe(2);
+      })
+      .end(done);
   });
 
 });
