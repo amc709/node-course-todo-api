@@ -8,6 +8,12 @@ var {User} = require('./models/user');
 
 var app = express();
 
+// Needed to enable application to be deployed to Heroku.
+// Get PORT created by Heroku as an environment variable; if none exists,
+// default to 3000.
+const port = process.env.PORT || 3000;
+
+
 // Middleware
 app.use(bodyParser.json());
 
@@ -57,8 +63,8 @@ app.get('/todos/:id', (req, resp) => {
 }) ;
 
 
-app.listen(3000, () => {
-  console.log('Started on port 3000');
+app.listen(port, () => {
+  console.log(`Started on port ${port}`);
 });
 
 

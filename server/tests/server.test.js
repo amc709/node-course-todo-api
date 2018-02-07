@@ -1,5 +1,7 @@
 const expect = require('expect');
 const request = require('supertest');
+
+// This was added for testing GET /todos/:id
 const {ObjectID} = require('mongodb');
 
 const {app} = require('./../server');
@@ -16,10 +18,10 @@ const {Todo} = require('./../models/todo');
   the database with some seed data using the array below.
 */
 const todos = [{
-  _id: new ObjectID(),
+  _id: new ObjectID(),      // Added for testing GET /todos/:id
   text: 'First test todo'
 },{
-  _id: new ObjectID(),
+  _id: new ObjectID(),      // Added for testing GET /todos/:id
   text: 'Second test todo'
 }];
 
