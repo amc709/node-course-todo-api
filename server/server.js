@@ -78,7 +78,7 @@ app.delete('/todos/:id', (req,res) => {
     if (!todoDoc){
       return res.status(404).send();
     }
-    return res.status(200).send(todoDoc);
+    return res.status(200).send({todoDoc});
   }, (err) => {  // or use same catch block as in previous route code
     return res.status(400).send();
   });
