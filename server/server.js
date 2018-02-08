@@ -1,10 +1,11 @@
-var express = require('express');
-var bodyParser = require('body-parser');
+const _ = require('lodash');
+const express = require('express');
+const bodyParser = require('body-parser');
 const {ObjectID} = require('mongodb');
 
-var {mongoose} = require('./db/mongoose');
-var {Todo} = require('./models/todo');
-var {User} = require('./models/user');
+const {mongoose} = require('./db/mongoose');
+const {Todo} = require('./models/todo');
+const {User} = require('./models/user');
 
 var app = express();
 
@@ -74,6 +75,12 @@ app.delete('/todos/:id', (req,res) => {
   }
 
   // Valid ID; proceed to remove the document
+  // remove todo by id
+    //success
+      // if no doc, send 404
+      // if doc, send doc back with 200
+    // error
+      // 400 with empty body
   Todo.findByIdAndRemove(id).then((todoDoc) => {
     if (!todoDoc){
       return res.status(404).send();
@@ -82,14 +89,42 @@ app.delete('/todos/:id', (req,res) => {
   }, (err) => {  // or use same catch block as in previous route code
     return res.status(400).send();
   });
-  // remove todo by id
-    //success
-      // if no doc, send 404
-      // if doc, send doc back with 200
-    // error
-      // 400 with empty body
+
 });
 
+
+// PATCH /todos/:id
+app.patch('/todos/:id', (req, res) => {
+  var id = req.params.id;
+
+  // The pick function allows you to specify a subset of the items
+  // sent by the user in the request.  Eg. Even if user sends a value before
+  // completedAt, it won't be used because the application (not the user)
+  // will set the value for it.
+  var body = _.pick(req.body, ['text','completed']);
+
+  // validate the id -> not valid, return 404
+  if (!ObjectID.isValid(id)){
+    return res.status(404).send();
+  }
+
+  // Check the 'completed' value; if true, set completedAt with a timestamp
+  if (_.isBoolean(body.completed) && body.completed){
+    body.completedAt = new Date().getTime();  // milliseconds from midnight 1/1/1970
+  } else {
+    body.completed = false;
+    body.completedAt = null;
+  }
+
+  Todo.findByIdAndUpdate(id, {$set: body}, {new: true}).then((todo) => {
+    if (!todo){
+      return res.status(404).send();
+    }
+    res.send({todo});
+  }).catch((e) =>{
+    res.status(400).send();
+  });
+});
 
 
 app.listen(port, () => {
