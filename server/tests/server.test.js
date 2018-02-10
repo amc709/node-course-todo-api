@@ -222,7 +222,7 @@ describe('PATCH /todos/:id', ()=>{
       request(app)
         .patch(`/todos/${hexId}`)
         .send({     // update text, set completed to false
-          text: "update todo 2 text",
+          text: "Pay bills",
           completed: false
         })
         // expect 200

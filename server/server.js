@@ -129,8 +129,39 @@ app.patch('/todos/:id', (req, res) => {
 });
 
 
+
+// POST /users
+// Pick email, password
+app.post('/users', (req, resp)=>{
+  var body = _.pick(req.body, ['email', 'password']);
+  // var user = new User({
+  //   email: body.email,
+  //   password: body.password
+  // });
+
+  // Another way to write the previous line
+  var user = new User(body);
+
+  // user.save().then((doc) => {
+  //   console.log(`Saved user: ${doc}`);
+  //   resp.status(200).send({doc});
+  // }, (err) =>{
+  //   console.log(`Unable to save user:  ${err}`);
+  //   resp.status(400).send(err);
+  // });
+
+  user.save().then(() => {
+    return user.generateAuthToken();
+  }).then((token) => {
+    resp.header('x-auth', token).send(user);
+  }).catch ((err) => {
+    resp.status(400).send(err);
+  });
+});
+
+
 app.listen(port, () => {
-  console.log(`Started on port ${port}`);
+  console.log(`Server started at port ${port}`);
 });
 
 
