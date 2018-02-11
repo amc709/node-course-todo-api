@@ -59,6 +59,30 @@ UserSchema.methods.generateAuthToken = function(){
   });
 };
 
+// statics creates model methods (not instance methods)
+UserSchema.statics.findByToken = function(token){
+  var User = this;
+  var decoded;  // will store decoded jwt values
+
+  try {
+    decoded = jwt.verify(token, 'abc123');
+  } catch (e){
+    // return new Promise((resolve, reject) => {
+    //   reject();
+    // });
+
+    // Above line can be rewritten as:
+    return Promise.reject();
+  }
+  return User.findOne({
+    '_id':  decoded._id,
+    'tokens.token': token,
+    'tokens.access': 'auth'
+  })
+};
+
+
+
 var User = mongoose.model('User', UserSchema);
 
 // var newUser = new User({
