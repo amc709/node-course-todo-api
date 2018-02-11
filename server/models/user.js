@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const validator = require('validator');
 const jwt = require('jsonwebtoken');
 const _ = require('lodash');
+const bcrypt = require('bcryptjs');
 
 var UserSchema = new mongoose.Schema({
   email:  {
@@ -21,12 +22,12 @@ var UserSchema = new mongoose.Schema({
       minlength: 6,
 
       // I added this validator
-      validate: {
-        validator: (value) => {
-          return /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?!.*[\W_\s]).{6,20}$/.test(value);
-        },
-        message: 'Password should contain at least one lowercase letter, one uppercase letter, one number, no non-alphanumberic characters, and should be between 6-20 characters'
-      }
+      // validate: {
+      //   validator: (value) => {
+      //     return /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?!.*[\W_\s]).{6,20}$/.test(value);
+      //   },
+      //   message: 'Password should contain at least one lowercase letter, one uppercase letter, one number, no non-alphanumberic characters, and should be between 6-20 characters'
+      // }
   },
   tokens:  [{
       access: {
@@ -82,6 +83,28 @@ UserSchema.statics.findByToken = function(token){
 };
 
 
+// Add a Mongoose middleware function to encrypt the password before saving
+// it to the database. (cf. search "Mongoose middleware")
+UserSchema.pre('save', function(next){
+  var user = this;
+
+  if(user.isModified('password')){
+    var password = user.password;
+
+    bcrypt.genSalt(10, (err, salt) => {
+      bcrypt.hash(password, salt, (err, hash) => {
+          if (err){
+            next(err);
+          }
+
+          user.password = hash;
+          next();
+      });
+    });
+  } else {
+    next();
+  };
+});
 
 var User = mongoose.model('User', UserSchema);
 
