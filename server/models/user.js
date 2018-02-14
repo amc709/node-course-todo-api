@@ -88,6 +88,30 @@ UserSchema.statics.findByToken = function(token){
 };
 
 
+
+UserSchema.statics.findByCredentials = function(email, password){
+  var User = this;
+  return User.findOne({email}).then((user) => {
+    if(!user){
+      return Promise.reject(); // This will be handled by the catch block in the calling function
+    }
+
+    return new Promise((resolve, reject) => {
+      bcrypt.compare(password, user.password, (err, res) => {
+        if (res) {
+          resolve(user);
+        } else {
+          reject();
+        }
+      });
+    });
+  });
+};
+
+
+
+
+
 // Add a Mongoose middleware function to encrypt the password before saving
 // it to the database. (cf. search "Mongoose middleware")
 UserSchema.pre('save', function(next){
