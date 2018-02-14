@@ -7,6 +7,8 @@ const {ObjectID} = require('mongodb');
 
 const {app} = require('./../server');
 const {Todo} = require('./../models/todo');
+const {User} = require('./../models/user');
+const {todos, populateTodos, users, populateUsers} = require('./seed/seed');
 
 /*
   TO RUN THE TEST IN COMMAND LINE:
@@ -14,31 +16,13 @@ const {Todo} = require('./../models/todo');
   NOTE:  test-watch should be added as a script in package.json
 */
 
-/*
-  Instead of clearing the database before running the tests, we will populate
-  the database with some seed data using the array below.
-*/
-const todos = [{
-  _id: new ObjectID(),      // Added for testing GET /todos/:id
-  text: 'First test todo'
-},{
-  _id: new ObjectID(),      // Added for testing GET /todos/:id
-  text: 'Second test todo',
-  completed: true,
-  completedAt: 12345
-}];
 
 // This wipes out the Todos database content before
 // running this test.  This ensures that after the post behavior successfully
 // adds the todo item in the database, there will only be one item in
 // that collection.
-beforeEach((done) => {
-  // Todo.remove({}).then(() => done());
-
-  Todo.remove({}).then(() => {
-    return Todo.insertMany(todos);  // Insert seed data into collection
-  }).then(() => done());
-});
+beforeEach(populateTodos);
+beforeEach(populateUsers);
 
 // POST Tests
 describe('POST /todos', () => {
@@ -65,7 +49,7 @@ describe('POST /todos', () => {
           done();
         }).catch((err) => done(err));
 
-        console.log('Done with first test');
+        // console.log('Done with first test');
       });
   });
 
@@ -235,6 +219,95 @@ describe('PATCH /todos/:id', ()=>{
             expect(resp.body.todo.completedAt).toNotExist();
         })
         .end(done);
+  });
+});
+
+
+
+// GET /users/me  ==> NOT WORKING PROPERLY.
+describe('GET /users/me', () => {
+  it('should return user if authenticated', (done) => {
+    request(app)
+      .get('/users/me')
+      .set('x-auth', users[0].tokens[0].token)
+      .expect(200)
+      .expect((res) => {
+        // console.log(`res: ${JSON.stringify(res, undefined, 2)}`);
+        expect(res.body._id).toBe(users[0]._id.toHexString());
+        expect(res.body.email).toBe(users[0].email);
+      })
+      .end(done);
+  });
+
+
+  it('should return 401 if not authenticated', (done) => {
+    request(app)
+      .get('/users/me')
+      .expect(401)
+      .expect((res) => {
+        expect(res.body).toEqual({});
+      })
+      .end(done);
+  });
+
+});
+
+
+describe('POST /users', () => {
+
+  it('should create a user', (done) => {
+    var email = 'example@example.com';
+    var password = '123mnb!';
+
+    request(app)
+      .post('/users')
+      .send({email, password})
+      .expect(200)
+      .expect((res) => {
+        expect(res.headers['x-auth']).toExist();
+        expect(res.body._id).toExist();
+        expect(res.body.email).toBe(email);
+      })
+      // .end(done);
+      .end((err) => {
+        if (err){
+          return done(err);
+        }
+        User.findOne({email}).then((user) =>{
+          expect(user).toExist();
+          expect(user.password).toNotBe(password);
+          done();
+        });
+      })
+  });
+
+  it('should return validation errors if request invalid', (done) => {
+    var email = 'abc.com';
+    var password = 'abc';
+
+    request(app)
+      .post('/users')
+      .send({email, password})
+      .expect(400)
+      .end(done);
+
+      // THIS DOES NOT WORK!!!
+      // .end((err) => {
+      //   if (err){
+      //     return done(err);
+      //   }
+      // });
+  });
+
+  it('should not create user if email in use', (done) => {
+    var email = users[0].email;
+    var password = 'abc1234';
+
+    request(app)
+      .post('/users')
+      .send({email, password})
+      .expect(400)
+      .end(done);
   });
 
 });

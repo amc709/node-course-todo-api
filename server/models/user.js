@@ -19,7 +19,7 @@ var UserSchema = new mongoose.Schema({
   password: {
       type: String,
       required: true,
-      minlength: 6,
+      minlength: 6
 
       // I added this validator
       // validate: {
@@ -40,7 +40,11 @@ var UserSchema = new mongoose.Schema({
       }
   }]
 
-});
+}
+, {
+  usePushEach: true
+}
+);
 
 UserSchema.methods.toJSON = function(){
   var user = this;
@@ -53,7 +57,8 @@ UserSchema.methods.generateAuthToken = function(){
   var user = this;
   var access = 'auth';
   var token = jwt.sign({_id: user._id.toHexString(), access}, 'abc123').toString();
-  user.tokens.push({access,token});
+  // user.tokens.push({access,token});
+  user.tokens = user.tokens.concat([{access, token}]);
 
   return user.save().then(() => {
     return token;
