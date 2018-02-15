@@ -131,7 +131,7 @@ app.patch('/todos/:id', (req, res) => {
 
 
 
-// POST /users
+// POST /users  -  Add user to database
 // Pick email, password
 app.post('/users', (req, resp)=>{
   var body = _.pick(req.body, ['email', 'password']);
@@ -179,6 +179,7 @@ app.get('/users/me', authenticate, (req, res) => {
 });
 
 
+// User login
 // POST /users/login  -> pass on {email, password}
 app.post('/users/login', (req, res) => {
   var body = _.pick(req.body, ['email', 'password']);
@@ -194,7 +195,7 @@ app.post('/users/login', (req, res) => {
 });
 
 
-
+// Log out user
 app.delete('/users/me/token', authenticate, (req, res) => {
   req.user.removeToken(req.token).then(() => {
     res.status(200).send();
